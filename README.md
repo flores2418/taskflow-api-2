@@ -10,8 +10,8 @@ Proyecto final de Bases de Datos NoSQL y MongoDB, Academia Talendig.
 Requisitos: Node.js 18 o superior y un cluster en MongoDB Atlas.
 
 ```bash
-   git clone https://github.com/flores2418/taskflow-api-2.git
-   cd taskflow-api-2
+git clone https://github.com/flores2418/taskflow-api-2.git
+cd taskflow-api-2
 npm install
 cp .env.example .env
 ```
