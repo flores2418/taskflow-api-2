@@ -1,0 +1,122 @@
+@baseUrl = http://localhost:3000/api
+
+### Crear equipo
+# @name createTeam
+POST {{baseUrl}}/teams
+Content-Type: application/json
+
+{ "name": "Soporte", "description": "Equipo de mesa de ayuda" }
+
+###
+@teamId = {{createTeam.response.body._id}}
+
+### Listar equipos
+GET {{baseUrl}}/teams
+
+### Obtener un equipo
+GET {{baseUrl}}/teams/{{teamId}}
+
+### Actualizar equipo
+PUT {{baseUrl}}/teams/{{teamId}}
+Content-Type: application/json
+
+{ "description": "Soporte nivel 1" }
+
+### Crear usuario en el equipo
+# @name createUser
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{ "name": "Flor", "email": "flor@example.com", "role": "admin", "teamId": "{{teamId}}" }
+
+###
+@userId = {{createUser.response.body._id}}
+
+### Listar usuarios
+GET {{baseUrl}}/users
+
+### Obtener un usuario
+GET {{baseUrl}}/users/{{userId}}
+
+### Actualizar usuario
+PUT {{baseUrl}}/users/{{userId}}
+Content-Type: application/json
+
+{ "name": "Flor Maria" }
+
+### Crear tarea 1
+# @name createTask
+POST {{baseUrl}}/tasks
+Content-Type: application/json
+
+{ "title": "Configurar impresora", "priority": 5, "teamId": "{{teamId}}", "assignedTo": "{{userId}}" }
+
+###
+@taskId = {{createTask.response.body._id}}
+
+### Crear tarea 2
+# @name createTask2
+POST {{baseUrl}}/tasks
+Content-Type: application/json
+
+{ "title": "Resetear password", "priority": 2, "teamId": "{{teamId}}" }
+
+###
+@taskId2 = {{createTask2.response.body._id}}
+
+### Crear tarea 3
+POST {{baseUrl}}/tasks
+Content-Type: application/json
+
+{ "title": "Instalar antivirus", "priority": 4, "teamId": "{{teamId}}", "assignedTo": "{{userId}}" }
+
+### Crear tarea 4
+POST {{baseUrl}}/tasks
+Content-Type: application/json
+
+{ "title": "Actualizar inventario", "priority": 1, "teamId": "{{teamId}}" }
+
+### Listar tareas
+GET {{baseUrl}}/tasks
+
+### Consulta avanzada
+GET {{baseUrl}}/tasks?status=todo&sort=-priority&page=1&limit=10
+
+### Paginacion de 2 en 2
+GET {{baseUrl}}/tasks?sort=-priority&page=1&limit=2
+
+### Obtener una tarea
+GET {{baseUrl}}/tasks/{{taskId}}
+
+### Marcar tarea como terminada
+PUT {{baseUrl}}/tasks/{{taskId}}
+Content-Type: application/json
+
+{ "status": "done" }
+
+### Eliminar tarea
+DELETE {{baseUrl}}/tasks/{{taskId2}}
+
+### Error 400: datos no validos
+POST {{baseUrl}}/tasks
+Content-Type: application/json
+
+{ "title": "ab", "status": "pendiente", "priority": 9 }
+
+### Error 400: id mal formado
+GET {{baseUrl}}/tasks/123
+
+### Error 404: no existe
+GET {{baseUrl}}/tasks/64b7f0000000000000000000
+
+### Error 409: email duplicado
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{ "name": "Otra Persona", "email": "flor@example.com" }
+
+### Eliminar usuario
+DELETE {{baseUrl}}/users/{{userId}}
+
+### Eliminar equipo
+DELETE {{baseUrl}}/teams/{{teamId}}
