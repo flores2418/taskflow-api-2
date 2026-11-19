@@ -1,115 +1,111 @@
-# TaskFlow API
+# TaskFlow
 
-API REST para gestionar tareas en equipo: usuarios, equipos y tareas.
-Hecha con Node.js, Express y MongoDB (Mongoose 9), conectada a MongoDB Atlas.
+Aplicación para gestionar tareas en equipo. Tiene una API en Node.js con Express y MongoDB, y un frontend en React.
 
-Proyecto final de Bases de Datos NoSQL y MongoDB, Academia Talendig.
+Todo corre con Docker Compose: un comando levanta la base de datos, la API y el frontend.
 
-## Instalacion y ejecucion
+## Requisitos previos
 
-Requisitos: Node.js 18 o superior y un cluster en MongoDB Atlas.
+- Docker Desktop instalado y abierto
+- Git
+
+No hace falta instalar Node ni MongoDB, porque todo corre dentro de contenedores.
+
+## Cómo levantarlo desde cero
+
+1. Clonar el repositorio:
 
 ```bash
 git clone https://github.com/flores2418/taskflow-api-2.git
 cd taskflow-api-2
-npm install
+```
+
+2. Crear el archivo `.env` a partir del ejemplo:
+
+```bash
 cp .env.example .env
 ```
 
-Edita `.env` con tu cadena de conexion y luego:
+3. Abrir `.env` y poner un usuario y una clave para MongoDB. Por ejemplo:
 
-```bash
-npm run dev
+```
+MONGO_USER=admin
+MONGO_PASSWORD=prueba123
+MONGO_DB_NAME=taskflow
+VITE_API_URL=http://localhost:3000
 ```
 
-La API queda en `http://localhost:3000`.
+4. Levantar todo:
 
-## Variables de entorno
+```bash
+docker compose up -d --build
+```
 
-| Variable | Descripcion | Ejemplo |
+5. Revisar que los tres servicios estén corriendo:
+
+```bash
+docker compose ps
+```
+
+`mongo` debe aparecer como `healthy`, y `api` y `web` como `Up`.
+
+## Puertos y URLs
+
+| Servicio | URL | Qué es |
 |---|---|---|
-| `PORT` | Puerto del servidor | `3000` |
-| `MONGO_URI` | Cadena de conexion de Atlas | `mongodb+srv://usuario:password@cluster0.xxxxx.mongodb.net/` |
-| `MONGO_DB_NAME` | Nombre de la base de datos | `taskflow_api` |
+| web | http://localhost:8080 | La página de TaskFlow |
+| api | http://localhost:3000 | La API REST |
+| mongo | sin puerto publicado | Solo se puede usar dentro de la red de Docker |
 
-El archivo `.env` esta en `.gitignore`. El repositorio solo incluye `.env.example`.
+Para probar, abre http://localhost:8080, crea un equipo y después una tarea.
+
+## Detener y borrar los datos
+
+Detener los contenedores (los datos de Mongo se quedan guardados en el volumen):
+
+```bash
+docker compose down
+```
+
+Detener y borrar también los datos:
+
+```bash
+docker compose down -v
+```
 
 ## Estructura
 
 ```
-config/db.js        Conexion a MongoDB (una vez, con dbName y maxPoolSize)
-models/             Team, User y Task
-controllers/        Logica de cada endpoint
-routes/             Endpoints de cada recurso
-middlewares/        Manejo centralizado de errores
-app.js              Configuracion de Express
-server.js           Conecta a la base y levanta el servidor
-postman/            Coleccion de Postman
-requests.http       Las mismas pruebas para REST Client
+taskflow-api-2/
+├── api/                 API en Node.js y Express
+│   ├── Dockerfile
+│   └── .dockerignore
+├── web/                 Frontend en React, servido con Nginx
+│   ├── Dockerfile
+│   ├── nginx.conf
+│   └── .dockerignore
+├── docker-compose.yml
+├── .env.example
+└── .gitignore
 ```
 
-Recorrido de una peticion: ruta → controlador → modelo → MongoDB.
+## Variables de entorno
 
-## Endpoints
-
-| Metodo | Ruta | Descripcion |
-|---|---|---|
-| GET | `/api/teams` | Listar equipos |
-| GET | `/api/teams/:id` | Obtener un equipo con sus miembros |
-| POST | `/api/teams` | Crear equipo |
-| PUT | `/api/teams/:id` | Actualizar equipo |
-| DELETE | `/api/teams/:id` | Eliminar equipo |
-| GET | `/api/users` | Listar usuarios |
-| GET | `/api/users/:id` | Obtener un usuario |
-| POST | `/api/users` | Crear usuario |
-| PUT | `/api/users/:id` | Actualizar usuario |
-| DELETE | `/api/users/:id` | Eliminar usuario |
-| GET | `/api/tasks` | Listar tareas con filtros, orden y paginacion |
-| GET | `/api/tasks/:id` | Obtener una tarea |
-| POST | `/api/tasks` | Crear tarea |
-| PUT | `/api/tasks/:id` | Actualizar tarea |
-| DELETE | `/api/tasks/:id` | Eliminar tarea |
-
-## Consulta avanzada
-
-`GET /api/tasks` acepta estos parametros:
-
-| Parametro | Descripcion |
+| Variable | Para qué sirve |
 |---|---|
-| `status` | `todo`, `in-progress` o `done` |
-| `priority` | Prioridad de 1 a 5 |
-| `teamId` | Id del equipo |
-| `assignedTo` | Id del usuario |
-| `sort` | Campo de orden. Con `-` adelante es descendente |
-| `page` | Pagina (por defecto 1) |
-| `limit` | Resultados por pagina (por defecto 10, maximo 100) |
+| `MONGO_USER` | Usuario administrador de MongoDB |
+| `MONGO_PASSWORD` | Clave de ese usuario |
+| `MONGO_DB_NAME` | Nombre de la base de datos |
+| `VITE_API_URL` | Dirección de la API que usa el frontend. Se fija al compilar |
 
-Ejemplo: `GET /api/tasks?status=todo&sort=-priority&page=1&limit=10`
+El `.env` está en `.gitignore` y nunca se sube al repositorio.
 
-## Modelos
+## Endpoints de la API
 
-- **Team**: `name` (obligatorio, unico), `description`, `members` (referencias a User).
-- **User**: `name`, `email` (unico, con formato validado), `role` (`admin` o `member`), `teamId` (referencia a Team).
-- **Task**: `title`, `description`, `status` (`todo`, `in-progress`, `done`), `priority` (1 a 5), `teamId` (referencia a Team), `assignedTo` (referencia a User), `completedAt`.
-
-Cuando una tarea pasa a `done`, un middleware `pre("save")` llena `completedAt`.
-
-## Errores
-
-Todos los errores salen con el mismo formato:
-
-```json
-{ "error": "Datos no validos", "details": ["El titulo es obligatorio"] }
-```
-
-| Codigo | Cuando |
+| Recurso | Rutas |
 |---|---|
-| 400 | Datos no validos o id con formato incorrecto |
-| 404 | El recurso o la ruta no existe |
-| 409 | Registro duplicado, por ejemplo un email repetido |
-| 500 | Error inesperado |
+| Equipos | `GET, POST /api/teams` · `GET, PUT, DELETE /api/teams/:id` |
+| Usuarios | `GET, POST /api/users` · `GET, PUT, DELETE /api/users/:id` |
+| Tareas | `GET, POST /api/tasks` · `GET, PUT, DELETE /api/tasks/:id` |
 
-## Pruebas
-
-- Postman: importar `postman/TaskFlow-API.postman_collection.json` y ejecutar en orden. Los ids se guardan en variables de la coleccion.
-- VS Code: abrir `requests.http` con la extension REST Client.
+`GET /api/tasks` acepta filtros, orden y paginación. Ejemplo: `?status=todo&sort=-priority&page=1&limit=10`
