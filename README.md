@@ -1,5 +1,8 @@
 # TaskFlow
 
+[![CI](https://github.com/flores2418/taskflow-api-2/actions/workflows/ci.yml/badge.svg)](https://github.com/flores2418/taskflow-api-2/actions/workflows/ci.yml)
+[![CD](https://github.com/flores2418/taskflow-api-2/actions/workflows/cd.yml/badge.svg)](https://github.com/flores2418/taskflow-api-2/actions/workflows/cd.yml)
+
 Aplicación para gestionar tareas en equipo. Tiene una API en Node.js con Express y MongoDB, y un frontend en React.
 
 Todo corre con Docker Compose: un comando levanta la base de datos, la API y el frontend.
@@ -77,9 +80,11 @@ docker compose down -v
 
 ```
 taskflow-api-2/
+├── .github/workflows/   ci.yml y cd.yml
 ├── api/                 API en Node.js y Express
 │   ├── Dockerfile
-│   └── .dockerignore
+│   ├── .dockerignore
+│   └── tests/
 ├── web/                 Frontend en React, servido con Nginx
 │   ├── Dockerfile
 │   ├── nginx.conf
@@ -109,3 +114,24 @@ El `.env` está en `.gitignore` y nunca se sube al repositorio.
 | Tareas | `GET, POST /api/tasks` · `GET, PUT, DELETE /api/tasks/:id` |
 
 `GET /api/tasks` acepta filtros, orden y paginación. Ejemplo: `?status=todo&sort=-priority&page=1&limit=10`
+
+## Pipeline CI/CD
+
+Uso GitHub Actions con dos workflows, `ci.yml` y `cd.yml`, en `.github/workflows/`.
+
+**En cada pull request** corre `ci.yml` con tres jobs:
+
+- `api`: instala, corre el lint y las pruebas de la API.
+- `web`: instala, corre el lint, las pruebas y el build del frontend.
+- `docker`: cuando los otros dos pasan, construye las imágenes con `docker compose build`.
+
+`main` está protegida, así que no se puede subir directo. Todo entra por pull request y solo se puede hacer merge si los tres checks están en verde.
+
+**Al hacer merge a main** corre `cd.yml`, que publica las imágenes en GitHub Container Registry:
+
+- `ghcr.io/flores2418/taskflow-api`
+- `ghcr.io/flores2418/taskflow-web`
+
+Cada merge crea los tags `sha-<commit>` y `latest`. Cuando creo un tag de Git como `v1.0.0`, también se publican `1.0.0` y `1.0`. Las imágenes están en la pestaña **Packages** del repo.
+
+**Secrets y variables:** el login a GHCR usa `secrets.GITHUB_TOKEN`, que GitHub genera solo, así que no hay ningún token en el código. La dirección de la API para el frontend está en la variable del repo `VITE_API_URL`.
