@@ -12,7 +12,7 @@ describe("TaskFlow API", () => {
   test("una ruta que no existe responde 404", async () => {
     const respuesta = await request(app).get("/api/no-existe");
 
-    expect(respuesta.status).toBe(200);
+    expect(respuesta.status).toBe(404);
   });
 
   test("crear una tarea sin datos responde 400", async () => {
